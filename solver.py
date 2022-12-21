@@ -38,7 +38,7 @@ def x_op(i: int, n: int):
     
 constraints = []
 # Row Constraints
-for i in [0,1,8,9,16,24]:
+for i in [0,1,8,9,16,17,24,25]:
     constraints.append((i, i+2, i+4, i+6))
 # Column Constraints
 for i in range(8):
@@ -46,6 +46,35 @@ for i in range(8):
 # Block Constraints
 for i in [0,1,4,5,16,17,20,21]:
     constraints.append((i, i+2, i+8, i+10))
+
+def cost(a,b,c,d):
+    global  known_vals_dict, complexity
+    print(a, b, c, d)
+    I = eye(1<<complexity)
+    unk = 0
+    if a in known_vals_dict.keys():
+        A = known_vals_dict[a]*I
+    else:
+        A = x_op(index[a], complexity)
+        unk+=1
+    if b in known_vals_dict.keys():
+        B = known_vals_dict[b]*I
+    else:
+        B = x_op(index[b], complexity)
+        unk+=1
+    if c in known_vals_dict.keys():
+        C = known_vals_dict[c]*I
+    else:
+        C = x_op(index[c], complexity)
+        unk+=1
+    if d in known_vals_dict.keys():
+        D = known_vals_dict[d]*I
+    else:
+        D = x_op(index[d], complexity)
+        unk+=1
+    print(unk)
+    z = (A+B+C+D-2*I)
+    return z*z
 
 # Get input
 query = ''
@@ -69,20 +98,25 @@ for it in query:
             raise Exception(f"Unknown Input {it}. Must be X, 1, 2, 3 or 4.")
         if val>4 or val<1: raise Exception(f"Unknown Input {it}. Must be X, 1, 2, 3 or 4.")
         exp_query += f"{bin(val-1)[2:]:0>2}"
-
+print(exp_query)
 # Generate index map for conversion later
 ind = -1
 index = {}
 known_vals = []
+known_vals_dict = {}
 for i, it in enumerate(exp_query):
     if it == 'X':
         ind +=1
-        index[ind] = i
+        index[i] = ind
     else:
         known_vals.append((i, int(it)))
-     
+        known_vals_dict[i] = int(it)
 # Make Hamiltonians
 # Initial Hamiltonian
 g   =   10. # strength
 H0  =   g*exchange(1<<complexity, dtype = 'D', format='csr')
 # Constructing the final hamiltonian
+Hf = cost(*constraints[0])
+for a,b,c,d in constraints[1:]:
+    Hf += cost(a,b,c,d)
+    
