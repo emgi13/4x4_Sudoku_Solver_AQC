@@ -4,7 +4,7 @@
 import numpy as np
 from findiff import FinDiff
 from scipy.sparse.linalg import inv, eigs
-from scipy.sparse import coo_array, eye, diags, kron
+from scipy.sparse import csr_matrix, eye, diags, kron
 import matplotlib.pyplot as plt
 import sys
 
@@ -28,6 +28,14 @@ def expand(val: int, known):
 def exchange(n, **kwargs):
     return eye(n, **kwargs)[::-1]
 
+# Generate X operator for the ith bit, n dim
+def x_op(i: int, n: int):
+    ival = 1<<(i)
+    row = [(high_bits<<(i+1))+ival+low_bits for low_bits in range(1<<(i)) for high_bits in range(1<<(n-i-1))]
+    col = [(high_bits<<(i+1))+ival+low_bits for low_bits in range(1<<(i)) for high_bits in range(1<<(n-i-1))]
+    data = [1 for _ in range(1<<(n-1))]
+    return csr_matrix((data, (row, col)), dtype='D')
+    
 constraints = []
 # Row Constraints
 for i in [0,1,8,9,16,24]:
